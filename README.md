@@ -1,9 +1,9 @@
 # Monolito Greeter
 
 Greeter **nativo em Rust + GTK4 para LightDM**, com entrada manual de contas
-locais e Active Directory. Duas telas, paisagem procedural original, controles
-de vidro inspirados no Raven e hierarquia visual inspirada nas referências
-Apple/Windows. Não usa WebKit, navegador ou página HTML.
+locais e Active Directory. Duas telas, arte procedural vetorial em Cairo
+(Windows 11 Bloom / curvas fluidas), materiais em liquid glass translúcido do macOS
+e ergonomia corporativa do Windows 11. Não usa WebKit, navegador ou página HTML.
 
 ## Compilar e visualizar no Linux Mint 22
 
@@ -22,7 +22,7 @@ cargo test --locked
 
 A prévia abre em janela, mostra um aviso permanente e **não se conecta ao
 LightDM**, não autentica usuários e não executa ações de energia. Use qualquer
-nome, senha `monolito` e código de demonstração `000000`. Senhas diferentes
+nome e a senha `monolito`. Senhas diferentes
 exercitam o estado de erro. `Escape` cancela a conversa ou volta à tela inicial.
 Sem `--demo`, o processo exige um LightDM real e falha fechado se ele não estiver
 disponível. Não existe fallback automático para o modo de demonstração.
@@ -43,8 +43,8 @@ sh scripts/smoke-test.sh target/release/monolito-greeter
 ```
 
 Esse teste dirige os widgets GTK e o adaptador simulado: senha incorreta,
-nova tentativa com `DOMINIO\usuario`, aviso ARCFOUR informativo e prompt de
-confirmação, senha, segundo fator, sessão simulada e limpeza dos campos.
+nova tentativa com `DOMINIO\usuario`, aviso ARCFOUR informativo e confirmação,
+senha direta, sessão simulada e limpeza dos campos.
 Ele não valida autenticação PAM real.
 
 ## Instalar e ativar no Mint
@@ -118,9 +118,9 @@ rede para fontes, imagens, clima ou telemetria. O menu de acessibilidade oferece
 alto contraste, texto maior e redução de movimento. Sessões e capacidades de
 energia vêm da liblightdm; ações de energia exigem confirmação.
 
-Veja [docs/design.md](docs/design.md) para decisões visuais e limites do vidro
-em GTK. Raven é referência visual, não uma dependência binária; o código GTK
-é próprio. Esta versão não implementa leitor de tela/teclado virtual integrado,
+Veja [docs/design.md](docs/design.md) para decisões visuais e limites dos materiais
+de vidro em GTK. O design adota os padrões modernos de formatos do Windows 11
+e liquid glass translúcido do macOS, sem dependências externas. Esta versão não implementa leitor de tela/teclado virtual integrado,
 troca de layout de teclado nem distribuição de telas por vários monitores.
 
 ## Ambiente de desenvolvimento na nuvem

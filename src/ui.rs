@@ -17,9 +17,6 @@ pub struct Greeter {
     stack: gtk::Stack,
     username: gtk::Entry,
     password: gtk::PasswordEntry,
-    challenge: gtk::Entry,
-    challenge_label: gtk::Label,
-    challenge_box: gtk::Box,
     submit: gtk::Button,
     cancel: gtk::Button,
     status: gtk::Label,
@@ -63,6 +60,7 @@ impl Greeter {
             .default_height(800)
             .build();
         window.add_css_class("greeter");
+
         let overlay = gtk::Overlay::new();
         if let Some(path) = &config.wallpaper {
             let picture = gtk::Picture::for_filename(path);
@@ -71,98 +69,149 @@ impl Greeter {
         } else {
             overlay.set_child(Some(&crate::background::landscape()));
         }
+
         let scrim = gtk::Box::new(gtk::Orientation::Vertical, 0);
         scrim.add_css_class("scrim");
         scrim.set_can_target(false);
         overlay.add_overlay(&scrim);
 
-        let layout = gtk::Box::new(gtk::Orientation::Vertical, 0);
-        layout.set_margin_start(36);
-        layout.set_margin_end(36);
-        layout.set_margin_top(26);
-        layout.set_margin_bottom(26);
-        let header = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-        let brand = gtk::Box::new(gtk::Orientation::Horizontal, 10);
-        brand.append(&label("M", "monogram"));
-        brand.append(&label("monolito", "wordmark"));
-        brand.set_hexpand(true);
-        header.append(&brand);
-        if backend.is_demo() {
-            header.append(&label("PRÉVIA · SEM AUTENTICAÇÃO REAL", "demo-badge"));
-        }
-        let access = gtk::MenuButton::builder()
-            .icon_name("preferences-desktop-accessibility-symbolic")
-            .tooltip_text("Acessibilidade")
-            .build();
-        access.add_css_class("round-button");
-        access.update_property(&[gtk::accessible::Property::Label("Acessibilidade")]);
-        let power = gtk::MenuButton::builder()
-            .icon_name("system-shutdown-symbolic")
-            .tooltip_text("Energia")
-            .build();
-        power.add_css_class("round-button");
-        power.update_property(&[gtk::accessible::Property::Label("Energia")]);
-        header.append(&access);
-        header.append(&power);
-        layout.append(&header);
-
         let stack = gtk::Stack::builder()
             .transition_type(gtk::StackTransitionType::Crossfade)
-            .transition_duration(280)
+            .transition_duration(250)
             .vexpand(true)
             .hexpand(true)
             .build();
-        let lock = gtk::Box::new(gtk::Orientation::Vertical, 4);
-        lock.set_valign(gtk::Align::Fill);
-        lock.set_halign(gtk::Align::Center);
-        let lock_time = label("", "clock");
-        lock_time.set_margin_top(55);
-        let lock_date = label("", "date");
-        lock.append(&lock_time);
-        lock.append(&lock_date);
-        let spacer = gtk::Box::new(gtk::Orientation::Vertical, 0);
-        spacer.set_vexpand(true);
-        lock.append(&spacer);
-        let welcome = gtk::Button::new();
-        welcome.add_css_class("welcome-pill");
-        let welcome_content = gtk::Box::new(gtk::Orientation::Horizontal, 14);
-        welcome_content.append(&label("M", "mini-avatar"));
-        let welcome_text = gtk::Box::new(gtk::Orientation::Vertical, 3);
-        let title = label("Seu espaço. Seu próximo passo.", "welcome-title");
-        title.set_xalign(0.);
-        welcome_text.append(&title);
-        let subtitle = label("Clique ou pressione uma tecla para entrar", "muted");
-        subtitle.set_xalign(0.);
-        welcome_text.append(&subtitle);
-        welcome_content.append(&welcome_text);
-        welcome_content.append(&gtk::Image::from_icon_name("go-next-symbolic"));
-        welcome.set_child(Some(&welcome_content));
-        lock.append(&welcome);
-        lock.set_margin_bottom(52);
-        stack.add_named(&lock, Some("lock"));
 
-        let login = gtk::Box::new(gtk::Orientation::Vertical, 12);
-        login.set_halign(gtk::Align::Center);
-        login.set_valign(gtk::Align::Center);
-        let small_clock = label("", "small-clock");
-        login.append(&small_clock);
-        let card = gtk::Box::new(gtk::Orientation::Vertical, 14);
+        // ------------------------------------------------------------------
+        // LOCK SCREEN (Windows 11 / macOS clean hierarchy)
+        // ------------------------------------------------------------------
+        let lock_root = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        lock_root.set_margin_start(40);
+        lock_root.set_margin_end(40);
+        lock_root.set_margin_top(32);
+        lock_root.set_margin_bottom(32);
+
+        // Lock screen top bar
+        let lock_header = gtk::Box::new(gtk::Orientation::Horizontal, 12);
+        let brand_label = label("monolito", "brand-wordmark");
+        lock_header.append(&brand_label);
+
+        if backend.is_demo() {
+            lock_header.append(&label("PRÉVIA", "demo-badge"));
+        }
+
+        let lock_header_spacer = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+        lock_header_spacer.set_hexpand(true);
+        lock_header.append(&lock_header_spacer);
+
+        let lock_net_icon = gtk::Image::from_icon_name("network-wired-symbolic");
+        lock_net_icon.add_css_class("network-indicator");
+        lock_header.append(&lock_net_icon);
+
+        let access_lock = gtk::MenuButton::builder()
+            .icon_name("preferences-desktop-accessibility-symbolic")
+            .tooltip_text("Acessibilidade")
+            .build();
+        access_lock.add_css_class("glass-circle-button");
+        access_lock.update_property(&[gtk::accessible::Property::Label("Acessibilidade")]);
+        lock_header.append(&access_lock);
+
+        let power_lock = gtk::MenuButton::builder()
+            .icon_name("system-shutdown-symbolic")
+            .tooltip_text("Energia")
+            .build();
+        power_lock.add_css_class("glass-circle-button");
+        power_lock.update_property(&[gtk::accessible::Property::Label("Energia")]);
+        lock_header.append(&power_lock);
+
+        lock_root.append(&lock_header);
+
+        // Centered clock & date
+        let lock_center = gtk::Box::new(gtk::Orientation::Vertical, 4);
+        lock_center.set_valign(gtk::Align::Center);
+        lock_center.set_halign(gtk::Align::Center);
+        lock_center.set_vexpand(true);
+
+        let lock_time = label("", "lock-clock");
+        let lock_date = label("", "lock-date");
+        lock_center.append(&lock_time);
+        lock_center.append(&lock_date);
+        lock_root.append(&lock_center);
+
+        // Lock bottom unlock indicator
+        let lock_bottom = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        lock_bottom.set_halign(gtk::Align::Center);
+
+        let unlock_button = gtk::Button::new();
+        unlock_button.add_css_class("unlock-hint");
+        let unlock_box = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+        unlock_box.append(&gtk::Image::from_icon_name("pan-up-symbolic"));
+        unlock_box.append(&label("Pressione qualquer tecla para desbloquear", ""));
+        unlock_button.set_child(Some(&unlock_box));
+        lock_bottom.append(&unlock_button);
+        lock_root.append(&lock_bottom);
+
+        stack.add_named(&lock_root, Some("lock"));
+
+        // ------------------------------------------------------------------
+        // LOGIN SCREEN (Windows 11 domain login + macOS liquid glass)
+        // ------------------------------------------------------------------
+        let login_root = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        login_root.set_margin_start(40);
+        login_root.set_margin_end(40);
+        login_root.set_margin_top(32);
+        login_root.set_margin_bottom(32);
+
+        // Top bar
+        let login_header = gtk::Box::new(gtk::Orientation::Horizontal, 12);
+        let brand_login = label("monolito", "brand-wordmark");
+        login_header.append(&brand_login);
+        if backend.is_demo() {
+            login_header.append(&label("PRÉVIA · SEM AUTENTICAÇÃO REAL", "demo-badge"));
+        }
+        let login_header_spacer = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+        login_header_spacer.set_hexpand(true);
+        login_header.append(&login_header_spacer);
+        login_root.append(&login_header);
+
+        // Center card container
+        let login_center = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        login_center.set_valign(gtk::Align::Center);
+        login_center.set_halign(gtk::Align::Center);
+        login_center.set_vexpand(true);
+
+        let card = gtk::Box::new(gtk::Orientation::Vertical, 0);
         card.add_css_class("login-card");
-        card.set_size_request(388, -1);
-        let avatar = gtk::Image::from_icon_name("avatar-default-symbolic");
-        avatar.set_pixel_size(34);
-        avatar.add_css_class("avatar");
-        avatar.set_halign(gtk::Align::Center);
-        card.append(&avatar);
-        card.append(&label(&config.title, "title"));
-        card.append(&label(&config.domain_hint, "subtitle"));
-        let fields = gtk::Box::new(gtk::Orientation::Vertical, 10);
-        fields.set_margin_top(10);
-        let user_label = label("Usuário", "field-label");
-        user_label.set_xalign(0.);
-        fields.append(&user_label);
+        card.set_halign(gtk::Align::Center);
+
+        // Large circular avatar (Windows 11 style)
+        let avatar_circle = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        avatar_circle.add_css_class("avatar-circle");
+        avatar_circle.set_halign(gtk::Align::Center);
+        avatar_circle.set_valign(gtk::Align::Center);
+        let avatar_img = gtk::Image::from_icon_name("avatar-default-symbolic");
+        avatar_img.set_pixel_size(44);
+        avatar_img.set_halign(gtk::Align::Center);
+        avatar_img.set_valign(gtk::Align::Center);
+        avatar_circle.append(&avatar_img);
+        card.append(&avatar_circle);
+
+        // Account title
+        let account_title = label(&config.title, "account-title");
+        account_title.set_halign(gtk::Align::Center);
+        card.append(&account_title);
+
+        // Domain hint
+        let domain_hint = label(&config.domain_hint, "account-subtitle");
+        domain_hint.set_halign(gtk::Align::Center);
+        card.append(&domain_hint);
+
+        // Fields
+        let fields = gtk::Box::new(gtk::Orientation::Vertical, 8);
+        fields.set_margin_top(4);
+
         let username = gtk::Entry::builder()
-            .placeholder_text("usuario@dominio ou DOMINIO\\usuario")
+            .placeholder_text("Nome de usuário ou DOMÍNIO\\usuário")
             .max_length(512)
             .build();
         username.update_property(&[gtk::accessible::Property::Label(
@@ -171,81 +220,99 @@ impl Greeter {
         username.set_input_purpose(gtk::InputPurpose::FreeForm);
         username.set_input_hints(gtk::InputHints::NO_SPELLCHECK | gtk::InputHints::LOWERCASE);
         fields.append(&username);
-        let password_label = label("Senha", "field-label");
-        password_label.set_xalign(0.);
-        fields.append(&password_label);
+
+        // Password row with inline submit arrow button
+        let password_row = gtk::Box::new(gtk::Orientation::Horizontal, 6);
         let password = gtk::PasswordEntry::builder()
-            .placeholder_text("Digite sua senha")
+            .placeholder_text("Senha")
             .show_peek_icon(true)
+            .hexpand(true)
             .build();
         password.update_property(&[gtk::accessible::Property::Label("Senha")]);
-        fields.append(&password);
-        let challenge_box = gtk::Box::new(gtk::Orientation::Vertical, 8);
-        let challenge_label = label("", "field-label");
-        challenge_label.set_wrap(true);
-        challenge_label.set_max_width_chars(38);
-        challenge_label.set_xalign(0.);
-        let challenge = gtk::Entry::new();
-        challenge.set_visibility(false);
-        challenge.set_input_hints(gtk::InputHints::PRIVATE | gtk::InputHints::NO_SPELLCHECK);
-        challenge.update_property(&[gtk::accessible::Property::Label(
-            "Resposta ao desafio de autenticação",
-        )]);
-        challenge_box.append(&challenge_label);
-        challenge_box.append(&challenge);
-        challenge_box.set_visible(false);
-        fields.append(&challenge_box);
-        card.append(&fields);
-        let submit = gtk::Button::with_label("Entrar  →");
-        submit.add_css_class("primary");
+        password_row.append(&password);
+
+        let submit = gtk::Button::builder()
+            .icon_name("go-next-symbolic")
+            .tooltip_text("Entrar")
+            .build();
+        submit.add_css_class("submit-arrow-btn");
         submit.set_sensitive(false);
-        card.append(&submit);
+        submit.update_property(&[gtk::accessible::Property::Label("Entrar")]);
+        password_row.append(&submit);
+
+        fields.append(&password_row);
+        card.append(&fields);
+
+        // Status row
         let status_row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
         status_row.set_halign(gtk::Align::Center);
         let spinner = gtk::Spinner::new();
         spinner.set_visible(false);
         status_row.append(&spinner);
-        let status = label("Conectando ao serviço de login…", "status");
+
+        let status = label("", "status-text");
         status.set_wrap(true);
-        status.set_max_width_chars(40);
+        status.set_max_width_chars(38);
         status.set_justify(gtk::Justification::Center);
         status_row.append(&status);
         card.append(&status_row);
-        let cancel = gtk::Button::with_label("Voltar");
-        cancel.add_css_class("text-button");
-        card.append(&cancel);
-        login.append(&card);
-        let local_note = label("Uma entrada tranquila para o que vem a seguir.", "caption");
-        login.append(&local_note);
-        // Keep the form reachable on short displays and with enlarged text,
-        // including PAM conversations that add another challenge field.
-        login.set_margin_top(12);
-        login.set_margin_bottom(12);
-        login.set_vexpand(true);
-        let login_scroll = gtk::ScrolledWindow::builder()
-            .hscrollbar_policy(gtk::PolicyType::Never)
-            .vscrollbar_policy(gtk::PolicyType::Automatic)
-            .propagate_natural_width(true)
-            .child(&login)
-            .build();
-        stack.add_named(&login_scroll, Some("login"));
-        layout.append(&stack);
 
-        let footer = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-        let session_box = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+        // Cancel / Back button
+        let cancel = gtk::Button::with_label("Voltar");
+        cancel.add_css_class("back-button");
+        cancel.set_halign(gtk::Align::Center);
+        card.append(&cancel);
+
+        login_center.append(&card);
+        login_root.append(&login_center);
+
+        // Bottom utility bar
+        let login_footer = gtk::Box::new(gtk::Orientation::Horizontal, 12);
+
+        // Bottom-left user tile (Windows 11 user switcher)
+        let user_switch_pill = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+        user_switch_pill.add_css_class("user-switch-pill");
+        let switch_avatar = gtk::Image::from_icon_name("avatar-default-symbolic");
+        switch_avatar.set_pixel_size(18);
+        switch_avatar.add_css_class("user-switch-avatar");
+        user_switch_pill.append(&switch_avatar);
+        user_switch_pill.append(&label(&config.title, "user-switch-label"));
+        login_footer.append(&user_switch_pill);
+
+        let footer_spacer = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+        footer_spacer.set_hexpand(true);
+        login_footer.append(&footer_spacer);
+
+        // Bottom-right controls: Session, Access, Power
+        let session_box = gtk::Box::new(gtk::Orientation::Horizontal, 6);
         session_box.add_css_class("session-pill");
         session_box.append(&gtk::Image::from_icon_name("video-display-symbolic"));
         let session = gtk::DropDown::from_strings(&["Carregando sessões…"]);
         session.set_sensitive(false);
         session.update_property(&[gtk::accessible::Property::Label("Sessão do sistema")]);
         session_box.append(&session);
-        footer.append(&session_box);
-        let footer_spacer = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-        footer_spacer.set_hexpand(true);
-        footer.append(&footer_spacer);
-        footer.append(&label("MONOLITO  /  GREETER", "footer-brand"));
-        layout.append(&footer);
-        overlay.add_overlay(&layout);
+        login_footer.append(&session_box);
+
+        let access_login = gtk::MenuButton::builder()
+            .icon_name("preferences-desktop-accessibility-symbolic")
+            .tooltip_text("Acessibilidade")
+            .build();
+        access_login.add_css_class("glass-circle-button");
+        access_login.update_property(&[gtk::accessible::Property::Label("Acessibilidade")]);
+        login_footer.append(&access_login);
+
+        let power_login = gtk::MenuButton::builder()
+            .icon_name("system-shutdown-symbolic")
+            .tooltip_text("Energia")
+            .build();
+        power_login.add_css_class("glass-circle-button");
+        power_login.update_property(&[gtk::accessible::Property::Label("Energia")]);
+        login_footer.append(&power_login);
+
+        login_root.append(&login_footer);
+        stack.add_named(&login_root, Some("login"));
+
+        overlay.add_overlay(&stack);
         window.set_child(Some(&overlay));
 
         let ui = Rc::new(Self {
@@ -254,9 +321,6 @@ impl Greeter {
             stack,
             username,
             password,
-            challenge,
-            challenge_label,
-            challenge_box,
             submit,
             cancel,
             status,
@@ -267,44 +331,50 @@ impl Greeter {
             connected: Cell::new(false),
             generation: Cell::new(0),
         });
-        ui.setup_accessibility(&access);
-        ui.setup_power(&power);
+
+        // Set up accessibility & power popovers on both screens
+        ui.setup_accessibility(&access_lock);
+        ui.setup_accessibility(&access_login);
+        ui.setup_power(&power_lock);
+        ui.setup_power(&power_login);
+
+        // Interactivity bindings
         let weak = Rc::downgrade(&ui);
-        welcome.connect_clicked(move |_| {
+        unlock_button.connect_clicked(move |_| {
             if let Some(ui) = weak.upgrade() {
                 ui.reveal();
             }
         });
+
         let weak = Rc::downgrade(&ui);
         ui.submit.connect_clicked(move |_| {
             if let Some(ui) = weak.upgrade() {
                 ui.submit();
             }
         });
+
         let weak = Rc::downgrade(&ui);
         ui.username.connect_activate(move |_| {
             if let Some(ui) = weak.upgrade() {
                 ui.password.grab_focus();
             }
         });
+
         let weak = Rc::downgrade(&ui);
         ui.password.connect_activate(move |_| {
             if let Some(ui) = weak.upgrade() {
                 ui.submit();
             }
         });
-        let weak = Rc::downgrade(&ui);
-        ui.challenge.connect_activate(move |_| {
-            if let Some(ui) = weak.upgrade() {
-                ui.submit();
-            }
-        });
+
         let weak = Rc::downgrade(&ui);
         ui.cancel.connect_clicked(move |_| {
             if let Some(ui) = weak.upgrade() {
                 ui.back();
             }
         });
+
+        // Global keyboard controller
         let key = gtk::EventControllerKey::new();
         key.set_propagation_phase(gtk::PropagationPhase::Capture);
         let weak = Rc::downgrade(&ui);
@@ -330,6 +400,8 @@ impl Greeter {
             glib::Propagation::Proceed
         });
         ui.window.add_controller(key);
+
+        // Lock screen gesture controllers
         let click = gtk::GestureClick::new();
         let weak = Rc::downgrade(&ui);
         click.connect_released(move |_, _, _, _| {
@@ -337,24 +409,25 @@ impl Greeter {
                 ui.reveal();
             }
         });
-        lock.add_controller(click);
+        lock_root.add_controller(click);
+
         let drag = gtk::GestureDrag::new();
         let weak = Rc::downgrade(&ui);
         drag.connect_drag_end(move |_, _, y| {
-            if y.abs() > 35. {
+            if y.abs() > 30. {
                 if let Some(ui) = weak.upgrade() {
                     ui.reveal();
                 }
             }
         });
-        lock.add_controller(drag);
+        lock_root.add_controller(drag);
+
+        // Clock timer
         let tick = move || {
             if let Ok(now) = glib::DateTime::now_local() {
                 if let Ok(time) = now.format("%H:%M") {
                     lock_time.set_text(&time);
-                    small_clock.set_text(&time);
                 }
-                // Portuguese names do not depend on a locale being installed.
                 let days = [
                     "segunda-feira",
                     "terça-feira",
@@ -391,6 +464,7 @@ impl Greeter {
             tick();
             glib::ControlFlow::Continue
         });
+
         ui
     }
 
@@ -398,11 +472,12 @@ impl Greeter {
         self.stack.set_visible_child_name("login");
         self.username.grab_focus();
     }
+
     pub fn clear_secrets(&self) {
         self.password.set_text("");
-        self.challenge.set_text("");
         self.state.borrow_mut().clear();
     }
+
     fn status(&self, text: &str, error: bool) {
         self.status.set_text(text);
         if error {
@@ -411,6 +486,7 @@ impl Greeter {
             self.status.remove_css_class("error");
         }
     }
+
     fn busy(&self, busy: bool) {
         if busy {
             self.cancel.grab_focus();
@@ -423,6 +499,7 @@ impl Greeter {
             .set_sensitive(!busy && !self.sessions.borrow().is_empty());
         self.submit.set_sensitive(!busy && self.connected.get());
     }
+
     pub fn connect(self: &Rc<Self>) {
         let weak = Rc::downgrade(self);
         self.backend.subscribe(Rc::new(move |event| {
@@ -439,16 +516,25 @@ impl Greeter {
                         let names: Vec<_> = sessions.iter().map(|s| s.name.as_str()).collect();
                         ui.session.set_model(Some(&gtk::StringList::new(&names)));
                         let default = ui.backend.default_session();
-                        if let Some(index) = sessions.iter().position(|s| s.key == default) { ui.session.set_selected(index as u32); }
+                        if let Some(index) = sessions.iter().position(|s| s.key == default) {
+                            ui.session.set_selected(index as u32);
+                        }
                         let has_sessions = !sessions.is_empty();
                         *ui.sessions.borrow_mut() = sessions;
                         ui.connected.set(has_sessions);
                         ui.busy(false);
-                        if !has_sessions { ui.status("Nenhuma sessão instalada. Instale Cinnamon, Xfce ou outra sessão do sistema.", true); }
-                        else if ui.backend.is_demo() { ui.status("Prévia: senha monolito · código 000000", false); }
-                        else { ui.status("Entre com sua conta para continuar.", false); }
+                        if !has_sessions {
+                            ui.status("Nenhuma sessão instalada no sistema.", true);
+                        } else if ui.backend.is_demo() {
+                            ui.status("Modo prévia: senha «monolito»", false);
+                        } else {
+                            ui.status("", false);
+                        }
                     }
-                    Err(_) => { ui.status("LightDM indisponível. Inicie pelo gerenciador de login ou use --demo para visualizar.", true); ui.busy(false); }
+                    Err(_) => {
+                        ui.status("LightDM indisponível. Inicie pelo gerenciador de login ou use --demo.", true);
+                        ui.busy(false);
+                    }
                 }
             }
         });
@@ -464,7 +550,7 @@ impl Greeter {
                 let user = self.username.text();
                 let user = user.trim();
                 if !policy::valid_username(user) {
-                    self.status("Digite seu usuário local ou de domínio.", true);
+                    self.status("Informe seu usuário local ou de domínio.", true);
                     self.username.grab_focus();
                     return;
                 }
@@ -472,9 +558,9 @@ impl Greeter {
                 self.password.set_text("");
                 self.state.borrow_mut().begin(password.to_string());
                 self.busy(true);
-                self.status("Verificando suas credenciais…", false);
+                self.status("Verificando credenciais…", false);
                 self.cancel.set_label("Cancelar");
-                if let Err(_) = self.backend.authenticate(user) {
+                if self.backend.authenticate(user).is_err() {
                     self.failed("Não foi possível iniciar a autenticação.");
                     return;
                 }
@@ -493,17 +579,6 @@ impl Greeter {
                         }
                     }
                 });
-            }
-            Phase::Prompt { .. } => {
-                let response = Zeroizing::new(self.challenge.text().to_string());
-                self.challenge.set_text("");
-                self.challenge_box.set_visible(false);
-                self.state.borrow_mut().phase = Phase::Authenticating;
-                self.busy(true);
-                self.status("Verificando resposta…", false);
-                if self.backend.respond(&response).is_err() {
-                    self.cancel_attempt("Falha ao enviar a resposta ao LightDM.");
-                }
             }
             _ => {}
         }
@@ -524,15 +599,8 @@ impl Greeter {
                         self.cancel_attempt("Falha na comunicação com o LightDM.");
                     }
                 } else {
-                    self.challenge_label.set_text(&text);
-                    self.challenge.set_visibility(!secret);
-                    self.challenge.set_text("");
-                    self.challenge_box.set_visible(true);
-                    self.spinner.set_spinning(false);
-                    self.spinner.set_visible(false);
-                    self.submit.set_sensitive(true);
-                    self.challenge.grab_focus();
-                    self.status("Conclua a verificação para continuar.", false);
+                    // Direct password authentication only. Unsupported prompts cancel cleanly.
+                    self.cancel_attempt("Desafio de autenticação adicional não suportado.");
                 }
             }
             Event::Message(text, error) => {
@@ -540,8 +608,6 @@ impl Greeter {
                     self.state.borrow().phase,
                     Phase::Authenticating | Phase::Prompt { .. }
                 ) {
-                    // Messages are never prompts. In particular they must not
-                    // trigger respond("") and desynchronize a PAM conversation.
                     let warning = text.to_lowercase();
                     if error || !(warning.contains("arcfour") && warning.contains("deprecated")) {
                         self.status(&text, error);
@@ -550,7 +616,7 @@ impl Greeter {
             }
             Event::Complete(authenticated) => {
                 if self.state.borrow().phase == Phase::Cancelling {
-                    self.failed("Autenticação cancelada. Você pode tentar novamente.");
+                    self.failed("Autenticação cancelada.");
                     return;
                 }
                 if !matches!(
@@ -561,13 +627,10 @@ impl Greeter {
                 }
                 self.generation.set(self.generation.get() + 1);
                 self.clear_secrets();
-                self.challenge_box.set_visible(false);
                 if authenticated {
                     self.start_session();
                 } else {
-                    self.failed(
-                        "Não foi possível entrar. Confira suas credenciais e tente novamente.",
-                    );
+                    self.failed("Nome de usuário ou senha incorretos.");
                 }
             }
             Event::Reset => {
@@ -578,6 +641,7 @@ impl Greeter {
             }
         }
     }
+
     fn start_session(self: &Rc<Self>) {
         let key = self
             .sessions
@@ -585,55 +649,69 @@ impl Greeter {
             .get(self.session.selected() as usize)
             .map(|s| s.key.clone());
         let Some(key) = key else {
-            self.failed("Selecione uma sessão válida para continuar.");
+            self.failed("Selecione uma sessão válida.");
             return;
         };
         self.state.borrow_mut().phase = Phase::Session;
         self.busy(true);
         self.cancel.set_sensitive(false);
-        self.status("Preparando seu espaço…", false);
+        self.status("Iniciando sessão…", false);
         let weak = Rc::downgrade(self);
         self.backend.start_session(&key, move |result| {
             if let Some(ui) = weak.upgrade() {
                 match result {
                     Ok(()) => {
                         ui.state.borrow_mut().phase = Phase::Complete;
-                        ui.spinner.set_spinning(false); ui.spinner.set_visible(false);
-                        ui.status(if ui.backend.is_demo() { "Prévia concluída. Nenhuma sessão real foi aberta." } else { "Sessão iniciada." }, false);
-                        if ui.backend.is_demo() { ui.cancel.set_sensitive(true); ui.cancel.set_label("Voltar à prévia"); }
+                        ui.spinner.set_spinning(false);
+                        ui.spinner.set_visible(false);
+                        ui.status(
+                            if ui.backend.is_demo() {
+                                "Prévia concluída. Nenhuma sessão real foi aberta."
+                            } else {
+                                "Sessão iniciada."
+                            },
+                            false,
+                        );
+                        if ui.backend.is_demo() {
+                            ui.cancel.set_sensitive(true);
+                            ui.cancel.set_label("Voltar");
+                        }
                     }
-                    Err(_) => ui.failed("A autenticação funcionou, mas a sessão não abriu. Confira os logs do LightDM e tente novamente."),
+                    Err(_) => ui.failed("Falha ao abrir a sessão do sistema."),
                 }
             }
         });
     }
+
     fn failed(&self, message: &str) {
         self.clear_secrets();
-        self.challenge_box.set_visible(false);
         self.busy(false);
         self.cancel.set_sensitive(true);
         self.cancel.set_label("Voltar");
         self.status(message, true);
         self.password.grab_focus();
     }
+
     fn cancel_attempt(&self, message: &str) {
         self.state.borrow_mut().cancel();
         self.password.set_text("");
-        self.challenge.set_text("");
-        self.challenge_box.set_visible(false);
         self.busy(true);
         self.status(message, true);
         if self.backend.cancel().is_err() {
             self.connected.set(false);
             self.busy(false);
-            self.status("LightDM não confirmou o cancelamento. Reinicie o greeter antes de tentar novamente.", true);
+            self.status(
+                "LightDM não confirmou o cancelamento. Reinicie o greeter antes de tentar novamente.",
+                true,
+            );
         }
     }
+
     fn back(&self) {
         let phase = self.state.borrow().phase;
         match phase {
             Phase::Session | Phase::Cancelling => return,
-            Phase::Authenticating | Phase::Prompt { .. } => { /* borrow ends below */ }
+            Phase::Authenticating | Phase::Prompt { .. } => {}
             _ => {
                 self.clear_secrets();
                 self.username.set_text("");
@@ -647,13 +725,13 @@ impl Greeter {
 
     fn setup_accessibility(&self, button: &gtk::MenuButton) {
         let popover = gtk::Popover::new();
-        popover.add_css_class("glass-popover");
-        let content = gtk::Box::new(gtk::Orientation::Vertical, 14);
-        content.set_margin_top(12);
-        content.set_margin_bottom(12);
+        let content = gtk::Box::new(gtk::Orientation::Vertical, 10);
+        content.set_margin_top(10);
+        content.set_margin_bottom(10);
         content.set_margin_start(12);
         content.set_margin_end(12);
-        content.append(&label("Acessibilidade", "popover-title"));
+        content.append(&label("Acessibilidade", "popover-header"));
+
         for (title, class) in [
             ("Alto contraste", "high-contrast"),
             ("Texto maior", "large-text"),
@@ -664,6 +742,7 @@ impl Greeter {
             name.set_hexpand(true);
             name.set_xalign(0.);
             row.append(&name);
+
             let switch = gtk::Switch::new();
             switch.update_property(&[gtk::accessible::Property::Label(title)]);
             let window = self.window.downgrade();
@@ -678,7 +757,7 @@ impl Greeter {
                 }
                 if class == "reduced-motion" {
                     if let Some(stack) = stack.upgrade() {
-                        stack.set_transition_duration(if switch.is_active() { 0 } else { 280 });
+                        stack.set_transition_duration(if switch.is_active() { 0 } else { 250 });
                     }
                 }
             });
@@ -688,17 +767,18 @@ impl Greeter {
         popover.set_child(Some(&content));
         button.set_popover(Some(&popover));
     }
+
     fn setup_power(self: &Rc<Self>, button: &gtk::MenuButton) {
         let popover = gtk::Popover::new();
-        popover.add_css_class("glass-popover");
         let content = gtk::Box::new(gtk::Orientation::Vertical, 4);
-        content.set_margin_top(8);
-        content.set_margin_bottom(8);
-        content.set_margin_start(8);
-        content.set_margin_end(8);
+        content.set_margin_top(6);
+        content.set_margin_bottom(6);
+        content.set_margin_start(6);
+        content.set_margin_end(6);
+
         for power in [Power::Suspend, Power::Restart, Power::Shutdown] {
             let action = gtk::Button::with_label(power.label());
-            action.add_css_class("power-action");
+            action.add_css_class("power-item");
             action.set_sensitive(self.backend.can_power(power));
             let weak = Rc::downgrade(self);
             let popup = popover.downgrade();
@@ -714,7 +794,7 @@ impl Greeter {
                         .buttons(gtk::ButtonsType::YesNo)
                         .text(format!("{} o computador?", power.label()))
                         .secondary_text(if ui.backend.is_demo() {
-                            "Modo de prévia: nenhuma ação será executada."
+                            "Modo prévia: nenhuma ação será executada."
                         } else {
                             "Esta ação será executada pelo serviço de energia do sistema."
                         })
@@ -740,8 +820,8 @@ impl Greeter {
     }
 }
 
-/// Drives the actual GTK widgets and demo signal adapter, including a failed
-/// password and a separate MFA challenge. It never connects to a real seat.
+/// Drives the actual GTK widgets and demo signal adapter.
+/// Single-step direct authentication for local accounts and Active Directory.
 pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
     let step = Rc::new(Cell::new(0));
     let ticks = Rc::new(Cell::new(0));
@@ -767,18 +847,8 @@ pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
                     None
                 }
             }
-            2 if phase == (Phase::Prompt { secret: true }) => {
-                if !ui.challenge_label.text().contains("000000") || !ui.password.text().is_empty() {
-                    Some(false)
-                } else {
-                    ui.challenge.set_text("000000");
-                    ui.submit.emit_clicked();
-                    step.set(3);
-                    None
-                }
-            }
-            3 if phase == Phase::Complete => {
-                if !ui.password.text().is_empty() || !ui.challenge.text().is_empty() {
+            2 if phase == Phase::Complete => {
+                if !ui.password.text().is_empty() {
                     Some(false)
                 } else {
                     ui.back();
@@ -786,18 +856,17 @@ pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
                     ui.username.set_text("teste@acme.example");
                     ui.password.set_text("monolito");
                     ui.submit.emit_clicked();
-                    step.set(4);
+                    step.set(3);
                     None
                 }
             }
-            4 if phase == (Phase::Prompt { secret: true }) => {
-                ui.challenge.set_text("partial-code");
+            3 if phase == Phase::Complete => {
                 ui.back();
-                step.set(5);
+                step.set(4);
                 None
             }
-            5 if phase == Phase::Idle => {
-                let cleared = ui.password.text().is_empty() && ui.challenge.text().is_empty();
+            4 if phase == Phase::Idle => {
+                let cleared = ui.password.text().is_empty();
                 ui.back();
                 Some(
                     cleared
@@ -810,7 +879,10 @@ pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
             _ => None,
         };
         if let Some(passed) = result {
-            println!("GTK smoke: {} (senha inválida, nova tentativa AD, aviso ARCFOUR, senha, MFA, sessão simulada, cancelamento, limpeza de campos)", if passed { "PASS" } else { "FAIL" });
+            println!(
+                "GTK smoke: {} (senha inválida, nova tentativa AD, aviso ARCFOUR, senha direta, sessão simulada, cancelamento, limpeza de campos)",
+                if passed { "PASS" } else { "FAIL" }
+            );
             failed.set(!passed);
             if let Some(app) = ui.window.application() {
                 app.quit();

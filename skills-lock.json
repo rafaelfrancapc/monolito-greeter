@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "audit-ai-design-slop": {
+      "source": "MengTo/Skills",
+      "sourceType": "github",
+      "skillPath": "agent-skills/ui/audit-ai-design-slop/SKILL.md",
+      "computedHash": "79b57b3916bae97dc1b35f3add316d02f4468de97fe79d115f8dc25993c4347e"
+    },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "1c48f0f9ad4bf6cac3c1a17e511b064153b6439d6af5028189a0d7c1708e5aa9"
+    }
+  }
+}

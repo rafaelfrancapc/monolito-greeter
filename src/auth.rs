@@ -340,13 +340,6 @@ impl Backend {
                     }
                     2 if response == "monolito" => {
                         stage.set(3);
-                        self.emit(Event::Prompt(
-                            "Código de demonstração (000000):".into(),
-                            true,
-                        ));
-                    }
-                    3 if response == "000000" => {
-                        stage.set(4);
                         self.emit(Event::Complete(true));
                     }
                     _ => {

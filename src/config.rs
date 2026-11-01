@@ -33,11 +33,11 @@ impl Config {
             title: file
                 .string("Greeter", "title")
                 .map(|s| s.to_string())
-                .unwrap_or_else(|_| "Bem-vindo de volta".into()),
+                .unwrap_or_else(|_| "Outro usuário".into()),
             domain_hint: file
                 .string("Greeter", "domain-hint")
                 .map(|s| s.to_string())
-                .unwrap_or_else(|_| "Sua conta local ou de trabalho".into()),
+                .unwrap_or_else(|_| "Conecte-se com sua conta corporativa ou local".into()),
             wallpaper,
             auto_ack: file
                 .boolean("Greeter", "acknowledge-arcfour")

@@ -1,27 +1,27 @@
-# Direção visual
+# Direção Visual e Design System
 
-Monolito Greeter combina a hierarquia das telas de entrada fornecidas com os
-materiais e controles descritos em `docs/THEMES.md` e `examples/glass/glass.xml`
-do [Raven](https://github.com/oscar-soirey/Raven), consultado no commit
-`ff35f641ff95ef21777015540278c9d2de7172a9`.
+O **Monolito Greeter** é projetado como uma interface corporativa, sóbria e nativa em Rust + GTK4 para o LightDM (com foco em ambientes Linux XFCE/Cinnamon/Mint), combinando os formatos e a ergonomia do **Windows 11** com os materiais de **liquid glass / acrílico translúcido do macOS**.
 
-- Relógio de grande escala, paisagem serena e transição para credenciais.
-- Cápsulas de vidro para ações flutuantes; campos opacos para legibilidade.
-- Card com raio de 28 px, controles de 12 px, contorno fino e sombras suaves.
-- Acento mineral, tipografia leve e avatar contido, sem logotipos de terceiros.
-- Navegação por teclado, foco visível, contraste elevado e movimento reduzido.
+## 1. Princípios de Design
 
-O Raven usa renderização própria em C/Vulkan. Esta implementação recria os
-padrões em widgets GTK4 para cumprir a stack solicitada, manter acessibilidade
-nativa e não carregar uma segunda árvore gráfica no processo de login. Não
-inclui código, fontes ou imagens do Raven nem componentes binários da Apple.
+- **Postura Corporativa e Direta:** Eliminação total de clichês de IA e textos excessivos (sem "Bem-vindo de volta", "Seu espaço", etc.). A interface vai direto ao ponto: identificação do usuário/domínio e campos de credencial.
+- **Autenticação Direta de Etapa Única:** Login direto por usuário e senha (`DOMINIO\usuario`, `usuario@empresa.com` ou `usuario`), compatível com Active Directory (SSSD/winbind) e contas locais PAM, sem códigos secundários artificiais.
+- **Ergonomia Windows 11:**
+  - *Tela de Bloqueio:* Relógio de grande escala centralizado no terço superior com data em português, ícones de status/utilidades e transição fluida ao toque ou pressionar de qualquer tecla.
+  - *Tela de Login:* Cartão centralizado com avatar circular generoso (86px), título do usuário/conta, dica de domínio, campos com botão de envio integrado (`→`) e alternador de contas corporativas no canto inferior esquerdo.
+  - *Controles do Sistema:* Seletor de sessão do desktop (XFCE, Cinnamon, etc.), acessibilidade e menu de energia (Suspender, Reiniciar, Desligar) no canto inferior direito.
+- **Materiais Liquid Glass (macOS):**
+  - Superfícies translúcidas em camadas profundas (`alpha(#0c1524, 0.72)`).
+  - Bordas nítidas de 1px (`alpha(white, 0.15)`) com realce de reflexo interno no topo (`inset 0 1px 0 alpha(white, 0.18)`).
+  - Sombras suaves de elevação em múltiplos estágios para profundidade autêntica sem necessidade de compositores pesados.
+- **Arte Procedural Cairo (Windows 11 Bloom):**
+  - Fundo padrão vetorial procedural com curvas de fita e pétalas fluidas em tons de safira, cobalto e azul noturno profundo.
+  - Suporte a wallpapers externos (arquivos estáticos em disco) através de `config.ini`.
 
-GTK CSS não implementa `backdrop-filter` nem `acrylic-blur` de CSS web. O material
-é composto por transparência, gradientes, borda e sombra. A arte procedural já
-é suave; wallpapers externos podem ser pré-desfocados pelo administrador.
-Isso evita depender de um compositor na sessão do LightDM.
+## 2. Acessibilidade e Teclado
 
-A interface não enumera contas locais: a entrada manual serve tanto a usuários
-locais quanto a AD. Não apresenta status de Wi-Fi, bateria ou idioma fictícios.
-O layout de teclado é o configurado no sistema/seat; não há seletor de layout
-nesta versão. A interface e a data são em português, com horário local do host.
+- **Navegação completa por teclado:** `Enter` no usuário foca a senha; `Enter` na senha ou no botão `→` dispara o login; `Escape` retorna à tela de bloqueio.
+- **Modos de Acessibilidade:**
+  - *Alto Contraste:* Fundos pretos sólidos, bordas brancas de 2px e tipografia de contraste máximo.
+  - *Texto Maior:* Ajuste proporcional de tipografia e campos.
+  - *Reduzir Movimento:* Desativa transições e animações para conformidade com preferências de acessibilidade motora e vestibular.
