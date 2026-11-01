@@ -1,9 +1,9 @@
 # Monolito Greeter
 
-Greeter **nativo em Rust + GTK4 para LightDM**, com entrada manual de contas
-locais e Active Directory. Duas telas, arte procedural vetorial em Cairo
-(Windows 11 Bloom / curvas fluidas), materiais em liquid glass translúcido do macOS
-e ergonomia corporativa do Windows 11. Não usa WebKit, navegador ou página HTML.
+Greeter **nativo em Rust + GTK4 para LightDM**, com suporte a contas
+locais e Active Directory. Duas telas, usuário pré-selecionado no padrão Windows 11,
+opção no canto para login manual, arte procedural vetorial em Cairo com foco suave
+e integração com desktop XFCE. Não usa WebKit, navegador ou página HTML.
 
 ## Compilar e visualizar no Linux Mint 22
 

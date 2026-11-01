@@ -33,6 +33,7 @@ extern "C" {
     fn lightdm_greeter_cancel_authentication(g: *mut Object, e: *mut *mut Error) -> i32;
     fn lightdm_greeter_get_is_authenticated(g: *mut Object) -> i32;
     fn lightdm_greeter_get_default_session_hint(g: *mut Object) -> *const c_char;
+    fn lightdm_greeter_get_select_user_hint(g: *mut Object) -> *const c_char;
     fn lightdm_greeter_start_session(
         g: *mut Object,
         session: *const c_char,
@@ -403,7 +404,20 @@ impl Backend {
             Self::Native(native) => unsafe {
                 text(lightdm_greeter_get_default_session_hint(native.ptr()))
             },
-            Self::Demo { .. } => "cinnamon".into(),
+            Self::Demo { .. } => "xfce".into(),
+        }
+    }
+    pub fn select_user_hint(&self) -> Option<String> {
+        match self {
+            Self::Native(native) => unsafe {
+                let name = text(lightdm_greeter_get_select_user_hint(native.ptr()));
+                if name.is_empty() {
+                    None
+                } else {
+                    Some(name)
+                }
+            },
+            Self::Demo { .. } => Some("rafael".into()),
         }
     }
     pub fn start_session(&self, session: &str, done: impl FnOnce(Result<(), String>) + 'static) {

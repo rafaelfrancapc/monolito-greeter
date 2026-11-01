@@ -14,6 +14,7 @@ use zeroize::Zeroizing;
 pub struct Greeter {
     pub window: gtk::ApplicationWindow,
     backend: Backend,
+    config: Rc<Config>,
     stack: gtk::Stack,
     username: gtk::Entry,
     password: gtk::PasswordEntry,
@@ -21,7 +22,12 @@ pub struct Greeter {
     cancel: gtk::Button,
     status: gtk::Label,
     spinner: gtk::Spinner,
-    session: gtk::DropDown,
+    heading_label: gtk::Label,
+    domain_hint_label: gtk::Label,
+    pub user_tile_preselected: gtk::Button,
+    pub user_tile_manual: gtk::Button,
+    pub is_manual: Cell<bool>,
+    pub default_user: String,
     sessions: RefCell<Vec<Session>>,
     state: RefCell<Conversation>,
     connected: Cell<bool>,
@@ -34,6 +40,11 @@ fn label(text: &str, class: &str) -> gtk::Label {
         label.add_css_class(class);
     }
     label
+}
+
+fn default_avatar_texture() -> Option<gdk::Texture> {
+    let bytes = glib::Bytes::from_static(include_bytes!("../data/avatar.png"));
+    gdk::Texture::from_bytes(&bytes).ok()
 }
 
 pub fn install_css() {
@@ -82,8 +93,19 @@ impl Greeter {
             .hexpand(true)
             .build();
 
+        let hostname = glib::host_name();
+        let default_user = if !config.default_user.is_empty() {
+            config.default_user.clone()
+        } else if let Some(hint) = backend.select_user_hint() {
+            hint
+        } else {
+            "rafael".to_string()
+        };
+
+        let avatar_texture = default_avatar_texture();
+
         // ------------------------------------------------------------------
-        // LOCK SCREEN (Windows 11 / macOS clean hierarchy)
+        // LOCK SCREEN (Windows 11 clean hierarchy)
         // ------------------------------------------------------------------
         let lock_root = gtk::Box::new(gtk::Orientation::Vertical, 0);
         lock_root.set_margin_start(40);
@@ -91,10 +113,10 @@ impl Greeter {
         lock_root.set_margin_top(32);
         lock_root.set_margin_bottom(32);
 
-        // Lock screen top bar
+        // Lock screen top bar: hostname on left, system utilities on right
         let lock_header = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-        let brand_label = label("monolito", "brand-wordmark");
-        lock_header.append(&brand_label);
+        let host_lock_label = label(&hostname, "hostname-label");
+        lock_header.append(&host_lock_label);
 
         if backend.is_demo() {
             lock_header.append(&label("PRÉVIA", "demo-badge"));
@@ -105,14 +127,14 @@ impl Greeter {
         lock_header.append(&lock_header_spacer);
 
         let lock_net_icon = gtk::Image::from_icon_name("network-wired-symbolic");
-        lock_net_icon.add_css_class("network-indicator");
+        lock_net_icon.add_css_class("utility-icon");
         lock_header.append(&lock_net_icon);
 
         let access_lock = gtk::MenuButton::builder()
             .icon_name("preferences-desktop-accessibility-symbolic")
             .tooltip_text("Acessibilidade")
             .build();
-        access_lock.add_css_class("glass-circle-button");
+        access_lock.add_css_class("flat-utility-btn");
         access_lock.update_property(&[gtk::accessible::Property::Label("Acessibilidade")]);
         lock_header.append(&access_lock);
 
@@ -120,7 +142,7 @@ impl Greeter {
             .icon_name("system-shutdown-symbolic")
             .tooltip_text("Energia")
             .build();
-        power_lock.add_css_class("glass-circle-button");
+        power_lock.add_css_class("flat-utility-btn");
         power_lock.update_property(&[gtk::accessible::Property::Label("Energia")]);
         lock_header.append(&power_lock);
 
@@ -154,7 +176,7 @@ impl Greeter {
         stack.add_named(&lock_root, Some("lock"));
 
         // ------------------------------------------------------------------
-        // LOGIN SCREEN (Windows 11 domain login + macOS liquid glass)
+        // LOGIN SCREEN (Windows 11 direct layout, NO card container)
         // ------------------------------------------------------------------
         let login_root = gtk::Box::new(gtk::Orientation::Vertical, 0);
         login_root.set_margin_start(40);
@@ -162,10 +184,10 @@ impl Greeter {
         login_root.set_margin_top(32);
         login_root.set_margin_bottom(32);
 
-        // Top bar
+        // Top bar: hostname
         let login_header = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-        let brand_login = label("monolito", "brand-wordmark");
-        login_header.append(&brand_login);
+        let host_login_label = label(&hostname, "hostname-label");
+        login_header.append(&host_login_label);
         if backend.is_demo() {
             login_header.append(&label("PRÉVIA · SEM AUTENTICAÇÃO REAL", "demo-badge"));
         }
@@ -174,44 +196,47 @@ impl Greeter {
         login_header.append(&login_header_spacer);
         login_root.append(&login_header);
 
-        // Center card container
+        // Center container: NO card, direct elements floating on blurred background
         let login_center = gtk::Box::new(gtk::Orientation::Vertical, 0);
         login_center.set_valign(gtk::Align::Center);
         login_center.set_halign(gtk::Align::Center);
         login_center.set_vexpand(true);
 
-        let card = gtk::Box::new(gtk::Orientation::Vertical, 0);
-        card.add_css_class("login-card");
-        card.set_halign(gtk::Align::Center);
+        let form_container = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        form_container.add_css_class("login-form-container");
+        form_container.set_halign(gtk::Align::Center);
 
-        // Large circular avatar (Windows 11 style)
-        let avatar_circle = gtk::Box::new(gtk::Orientation::Vertical, 0);
-        avatar_circle.add_css_class("avatar-circle");
-        avatar_circle.set_halign(gtk::Align::Center);
-        avatar_circle.set_valign(gtk::Align::Center);
-        let avatar_img = gtk::Image::from_icon_name("avatar-default-symbolic");
-        avatar_img.set_pixel_size(44);
-        avatar_img.set_halign(gtk::Align::Center);
-        avatar_img.set_valign(gtk::Align::Center);
-        avatar_circle.append(&avatar_img);
-        card.append(&avatar_circle);
+        // User Avatar Picture (Uploaded Windows 11 style avatar)
+        let avatar_widget = if let Some(texture) = &avatar_texture {
+            let pic = gtk::Picture::for_paintable(texture);
+            pic.set_can_shrink(true);
+            pic.set_content_fit(gtk::ContentFit::Cover);
+            pic.set_size_request(96, 96);
+            pic.add_css_class("avatar-picture");
+            pic.set_halign(gtk::Align::Center);
+            pic
+        } else {
+            let pic = gtk::Picture::new();
+            pic.set_size_request(96, 96);
+            pic.add_css_class("avatar-picture");
+            pic.set_halign(gtk::Align::Center);
+            pic
+        };
+        form_container.append(&avatar_widget);
 
-        // Account title
-        let account_title = label(&config.title, "account-title");
-        account_title.set_halign(gtk::Align::Center);
-        card.append(&account_title);
+        // User heading: shows active user's name or "Outro usuário"
+        let heading_label = label(&default_user, "account-title");
+        heading_label.set_halign(gtk::Align::Center);
+        form_container.append(&heading_label);
 
-        // Domain hint
-        let domain_hint = label(&config.domain_hint, "account-subtitle");
-        domain_hint.set_halign(gtk::Align::Center);
-        card.append(&domain_hint);
-
-        // Fields
+        // Inputs container
         let fields = gtk::Box::new(gtk::Orientation::Vertical, 8);
-        fields.set_margin_top(4);
+        fields.set_halign(gtk::Align::Center);
+        fields.set_size_request(280, -1);
 
+        // Username field (only visible in manual "Outro usuário" mode)
         let username = gtk::Entry::builder()
-            .placeholder_text("Nome de usuário ou DOMÍNIO\\usuário")
+            .placeholder_text("Nome de usuário")
             .max_length(512)
             .build();
         username.update_property(&[gtk::accessible::Property::Label(
@@ -219,10 +244,12 @@ impl Greeter {
         )]);
         username.set_input_purpose(gtk::InputPurpose::FreeForm);
         username.set_input_hints(gtk::InputHints::NO_SPELLCHECK | gtk::InputHints::LOWERCASE);
+        username.set_text(&default_user);
+        username.set_visible(false); // Initially hidden because default user is preselected!
         fields.append(&username);
 
-        // Password row with inline submit arrow button
-        let password_row = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+        // Password row with discrete Windows 11 submit button
+        let password_row = gtk::Box::new(gtk::Orientation::Horizontal, 4);
         let password = gtk::PasswordEntry::builder()
             .placeholder_text("Senha")
             .show_peek_icon(true)
@@ -235,13 +262,20 @@ impl Greeter {
             .icon_name("go-next-symbolic")
             .tooltip_text("Entrar")
             .build();
-        submit.add_css_class("submit-arrow-btn");
+        submit.add_css_class("submit-btn");
         submit.set_sensitive(false);
         submit.update_property(&[gtk::accessible::Property::Label("Entrar")]);
         password_row.append(&submit);
 
         fields.append(&password_row);
-        card.append(&fields);
+
+        // Domain hint label (shown in manual login mode)
+        let domain_hint_label = label(&format!("Entrar em: {}", config.domain_hint), "account-subtitle");
+        domain_hint_label.set_halign(gtk::Align::Center);
+        domain_hint_label.set_visible(false);
+        fields.append(&domain_hint_label);
+
+        form_container.append(&fields);
 
         // Status row
         let status_row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
@@ -255,49 +289,73 @@ impl Greeter {
         status.set_max_width_chars(38);
         status.set_justify(gtk::Justification::Center);
         status_row.append(&status);
-        card.append(&status_row);
+        form_container.append(&status_row);
 
         // Cancel / Back button
         let cancel = gtk::Button::with_label("Voltar");
         cancel.add_css_class("back-button");
         cancel.set_halign(gtk::Align::Center);
-        card.append(&cancel);
+        form_container.append(&cancel);
 
-        login_center.append(&card);
+        login_center.append(&form_container);
         login_root.append(&login_center);
 
         // Bottom utility bar
         let login_footer = gtk::Box::new(gtk::Orientation::Horizontal, 12);
 
-        // Bottom-left user tile (Windows 11 user switcher)
-        let user_switch_pill = gtk::Box::new(gtk::Orientation::Horizontal, 8);
-        user_switch_pill.add_css_class("user-switch-pill");
-        let switch_avatar = gtk::Image::from_icon_name("avatar-default-symbolic");
-        switch_avatar.set_pixel_size(18);
-        switch_avatar.add_css_class("user-switch-avatar");
-        user_switch_pill.append(&switch_avatar);
-        user_switch_pill.append(&label(&config.title, "user-switch-label"));
-        login_footer.append(&user_switch_pill);
+        // Bottom-left: Windows 11 User Switcher list (Default user & Other user)
+        let user_switch_box = gtk::Box::new(gtk::Orientation::Vertical, 4);
+        user_switch_box.add_css_class("user-switch-container");
+
+        // Item 1: Default / Preselected user
+        let user_tile_preselected = gtk::Button::new();
+        user_tile_preselected.add_css_class("user-switch-item");
+        user_tile_preselected.add_css_class("active");
+        let preselected_content = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+        if let Some(texture) = &avatar_texture {
+            let pic = gtk::Picture::for_paintable(texture);
+            pic.set_can_shrink(true);
+            pic.set_content_fit(gtk::ContentFit::Cover);
+            pic.set_size_request(32, 32);
+            pic.add_css_class("avatar-small");
+            preselected_content.append(&pic);
+        }
+        preselected_content.append(&label(&default_user, "user-switch-label"));
+        user_tile_preselected.set_child(Some(&preselected_content));
+        user_switch_box.append(&user_tile_preselected);
+
+        // Item 2: Manual login ("Outro usuário")
+        let user_tile_manual = gtk::Button::new();
+        user_tile_manual.add_css_class("user-switch-item");
+        let manual_content = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+        if let Some(texture) = &avatar_texture {
+            let pic = gtk::Picture::for_paintable(texture);
+            pic.set_can_shrink(true);
+            pic.set_content_fit(gtk::ContentFit::Cover);
+            pic.set_size_request(32, 32);
+            pic.add_css_class("avatar-small");
+            manual_content.append(&pic);
+        }
+        manual_content.append(&label("Outro usuário", "user-switch-label"));
+        user_tile_manual.set_child(Some(&manual_content));
+        user_switch_box.append(&user_tile_manual);
+
+        login_footer.append(&user_switch_box);
 
         let footer_spacer = gtk::Box::new(gtk::Orientation::Horizontal, 0);
         footer_spacer.set_hexpand(true);
         login_footer.append(&footer_spacer);
 
-        // Bottom-right controls: Session, Access, Power
-        let session_box = gtk::Box::new(gtk::Orientation::Horizontal, 6);
-        session_box.add_css_class("session-pill");
-        session_box.append(&gtk::Image::from_icon_name("video-display-symbolic"));
-        let session = gtk::DropDown::from_strings(&["Carregando sessões…"]);
-        session.set_sensitive(false);
-        session.update_property(&[gtk::accessible::Property::Label("Sessão do sistema")]);
-        session_box.append(&session);
-        login_footer.append(&session_box);
+        // Bottom-right: Network, Accessibility, Power (Clean flat buttons)
+        let login_net_icon = gtk::Image::from_icon_name("network-wired-symbolic");
+        login_net_icon.add_css_class("utility-icon");
+        login_footer.append(&login_net_icon);
 
         let access_login = gtk::MenuButton::builder()
             .icon_name("preferences-desktop-accessibility-symbolic")
             .tooltip_text("Acessibilidade")
             .build();
-        access_login.add_css_class("glass-circle-button");
+        access_login.add_css_class("flat-utility-btn");
         access_login.update_property(&[gtk::accessible::Property::Label("Acessibilidade")]);
         login_footer.append(&access_login);
 
@@ -305,7 +363,7 @@ impl Greeter {
             .icon_name("system-shutdown-symbolic")
             .tooltip_text("Energia")
             .build();
-        power_login.add_css_class("glass-circle-button");
+        power_login.add_css_class("flat-utility-btn");
         power_login.update_property(&[gtk::accessible::Property::Label("Energia")]);
         login_footer.append(&power_login);
 
@@ -318,6 +376,13 @@ impl Greeter {
         let ui = Rc::new(Self {
             window,
             backend,
+            config: Rc::new(Config {
+                default_user: config.default_user.clone(),
+                domain_hint: config.domain_hint.clone(),
+                default_session: config.default_session.clone(),
+                wallpaper: config.wallpaper.clone(),
+                auto_ack: config.auto_ack,
+            }),
             stack,
             username,
             password,
@@ -325,7 +390,12 @@ impl Greeter {
             cancel,
             status,
             spinner,
-            session,
+            heading_label,
+            domain_hint_label,
+            user_tile_preselected,
+            user_tile_manual,
+            is_manual: Cell::new(false),
+            default_user,
             sessions: RefCell::new(Vec::new()),
             state: RefCell::new(Conversation::new(config.auto_ack)),
             connected: Cell::new(false),
@@ -337,6 +407,21 @@ impl Greeter {
         ui.setup_accessibility(&access_login);
         ui.setup_power(&power_lock);
         ui.setup_power(&power_login);
+
+        // Switcher bindings
+        let weak = Rc::downgrade(&ui);
+        ui.user_tile_preselected.connect_clicked(move |_| {
+            if let Some(ui) = weak.upgrade() {
+                ui.set_mode_manual(false);
+            }
+        });
+
+        let weak = Rc::downgrade(&ui);
+        ui.user_tile_manual.connect_clicked(move |_| {
+            if let Some(ui) = weak.upgrade() {
+                ui.set_mode_manual(true);
+            }
+        });
 
         // Interactivity bindings
         let weak = Rc::downgrade(&ui);
@@ -468,9 +553,32 @@ impl Greeter {
         ui
     }
 
+    pub fn set_mode_manual(&self, manual: bool) {
+        self.is_manual.set(manual);
+        self.clear_secrets();
+        self.status("", false);
+        if manual {
+            self.heading_label.set_text("Outro usuário");
+            self.username.set_visible(true);
+            self.username.set_text("");
+            self.domain_hint_label.set_visible(true);
+            self.user_tile_preselected.remove_css_class("active");
+            self.user_tile_manual.add_css_class("active");
+            self.username.grab_focus();
+        } else {
+            self.heading_label.set_text(&self.default_user);
+            self.username.set_visible(false);
+            self.username.set_text(&self.default_user);
+            self.domain_hint_label.set_visible(false);
+            self.user_tile_preselected.add_css_class("active");
+            self.user_tile_manual.remove_css_class("active");
+            self.password.grab_focus();
+        }
+    }
+
     fn reveal(&self) {
         self.stack.set_visible_child_name("login");
-        self.username.grab_focus();
+        self.set_mode_manual(false);
     }
 
     pub fn clear_secrets(&self) {
@@ -495,9 +603,9 @@ impl Greeter {
         self.spinner.set_spinning(busy);
         self.username.set_sensitive(!busy);
         self.password.set_sensitive(!busy);
-        self.session
-            .set_sensitive(!busy && !self.sessions.borrow().is_empty());
         self.submit.set_sensitive(!busy && self.connected.get());
+        self.user_tile_preselected.set_sensitive(!busy);
+        self.user_tile_manual.set_sensitive(!busy);
     }
 
     pub fn connect(self: &Rc<Self>) {
@@ -513,12 +621,6 @@ impl Greeter {
                 match result {
                     Ok(()) => {
                         let sessions = ui.backend.sessions();
-                        let names: Vec<_> = sessions.iter().map(|s| s.name.as_str()).collect();
-                        ui.session.set_model(Some(&gtk::StringList::new(&names)));
-                        let default = ui.backend.default_session();
-                        if let Some(index) = sessions.iter().position(|s| s.key == default) {
-                            ui.session.set_selected(index as u32);
-                        }
                         let has_sessions = !sessions.is_empty();
                         *ui.sessions.borrow_mut() = sessions;
                         ui.connected.set(has_sessions);
@@ -547,11 +649,17 @@ impl Greeter {
         let phase = self.state.borrow().phase;
         match phase {
             Phase::Idle => {
-                let user = self.username.text();
-                let user = user.trim();
+                let user_str = if self.is_manual.get() {
+                    self.username.text().to_string()
+                } else {
+                    self.default_user.clone()
+                };
+                let user = user_str.trim();
                 if !policy::valid_username(user) {
                     self.status("Informe seu usuário local ou de domínio.", true);
-                    self.username.grab_focus();
+                    if self.is_manual.get() {
+                        self.username.grab_focus();
+                    }
                     return;
                 }
                 let password = Zeroizing::new(self.password.text().to_string());
@@ -599,7 +707,6 @@ impl Greeter {
                         self.cancel_attempt("Falha na comunicação com o LightDM.");
                     }
                 } else {
-                    // Direct password authentication only. Unsupported prompts cancel cleanly.
                     self.cancel_attempt("Desafio de autenticação adicional não suportado.");
                 }
             }
@@ -643,21 +750,28 @@ impl Greeter {
     }
 
     fn start_session(self: &Rc<Self>) {
-        let key = self
-            .sessions
-            .borrow()
-            .get(self.session.selected() as usize)
-            .map(|s| s.key.clone());
-        let Some(key) = key else {
-            self.failed("Selecione uma sessão válida.");
-            return;
+        // Preferred session from config (default 'xfce'), fallback to backend default or first installed
+        let sessions = self.sessions.borrow();
+        let target_key = if let Some(s) = sessions.iter().find(|s| s.key == self.config.default_session) {
+            s.key.clone()
+        } else {
+            let default_hint = self.backend.default_session();
+            if let Some(s) = sessions.iter().find(|s| s.key == default_hint) {
+                s.key.clone()
+            } else if let Some(s) = sessions.first() {
+                s.key.clone()
+            } else {
+                self.config.default_session.clone()
+            }
         };
+        drop(sessions);
+
         self.state.borrow_mut().phase = Phase::Session;
         self.busy(true);
         self.cancel.set_sensitive(false);
         self.status("Iniciando sessão…", false);
         let weak = Rc::downgrade(self);
-        self.backend.start_session(&key, move |result| {
+        self.backend.start_session(&target_key, move |result| {
             if let Some(ui) = weak.upgrade() {
                 match result {
                     Ok(()) => {
@@ -714,7 +828,7 @@ impl Greeter {
             Phase::Authenticating | Phase::Prompt { .. } => {}
             _ => {
                 self.clear_secrets();
-                self.username.set_text("");
+                self.set_mode_manual(false);
                 self.busy(false);
                 self.stack.set_visible_child_name("lock");
                 return;
@@ -821,7 +935,7 @@ impl Greeter {
 }
 
 /// Drives the actual GTK widgets and demo signal adapter.
-/// Single-step direct authentication for local accounts and Active Directory.
+/// Single-step direct authentication with preselected user and manual domain login.
 pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
     let step = Rc::new(Cell::new(0));
     let ticks = Rc::new(Cell::new(0));
@@ -831,7 +945,7 @@ pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
         let result = match step.get() {
             0 if ui.connected.get() => {
                 ui.reveal();
-                ui.username.set_text("ACME\\teste");
+                // Test preselected user with wrong password
                 ui.password.set_text("wrong");
                 ui.submit.emit_clicked();
                 step.set(1);
@@ -841,6 +955,7 @@ pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
                 if !ui.status.has_css_class("error") {
                     Some(false)
                 } else {
+                    // Correct password for preselected user
                     ui.password.set_text("monolito");
                     ui.submit.emit_clicked();
                     step.set(2);
@@ -851,8 +966,10 @@ pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
                 if !ui.password.text().is_empty() {
                     Some(false)
                 } else {
+                    // Back to lock screen, reveal, then switch to manual login
                     ui.back();
                     ui.reveal();
+                    ui.set_mode_manual(true);
                     ui.username.set_text("teste@acme.example");
                     ui.password.set_text("monolito");
                     ui.submit.emit_clicked();
@@ -870,7 +987,6 @@ pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
                 ui.back();
                 Some(
                     cleared
-                        && ui.username.text().is_empty()
                         && ui.stack.visible_child_name().as_deref() == Some("lock")
                         && ui.backend.is_demo(),
                 )
@@ -880,7 +996,7 @@ pub fn smoke_test(ui: Rc<Greeter>, failed: Rc<Cell<bool>>) {
         };
         if let Some(passed) = result {
             println!(
-                "GTK smoke: {} (senha inválida, nova tentativa AD, aviso ARCFOUR, senha direta, sessão simulada, cancelamento, limpeza de campos)",
+                "GTK smoke: {} (usuário prévio, senha incorreta, nova tentativa, login manual de domínio, sessão xfce, limpeza)",
                 if passed { "PASS" } else { "FAIL" }
             );
             failed.set(!passed);

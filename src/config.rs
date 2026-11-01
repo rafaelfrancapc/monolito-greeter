@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
 pub struct Config {
-    pub title: String,
+    pub default_user: String,
     pub domain_hint: String,
+    pub default_session: String,
     pub wallpaper: Option<PathBuf>,
     pub auto_ack: bool,
 }
@@ -29,19 +30,29 @@ impl Config {
                 return Err("O wallpaper deve ser um arquivo absoluto legível.".into());
             }
         }
+        let default_user = file
+            .string("Greeter", "default-user")
+            .or_else(|_| file.string("Greeter", "title"))
+            .map(|s| s.to_string())
+            .unwrap_or_else(|_| "rafael".into());
+        let domain_hint = file
+            .string("Greeter", "domain-hint")
+            .map(|s| s.to_string())
+            .unwrap_or_else(|_| "Conecte-se com sua conta corporativa ou local".into());
+        let default_session = file
+            .string("Greeter", "default-session")
+            .map(|s| s.to_string())
+            .unwrap_or_else(|_| "xfce".into());
+        let auto_ack = file
+            .boolean("Greeter", "acknowledge-arcfour")
+            .unwrap_or(true);
+
         Ok(Self {
-            title: file
-                .string("Greeter", "title")
-                .map(|s| s.to_string())
-                .unwrap_or_else(|_| "Outro usuário".into()),
-            domain_hint: file
-                .string("Greeter", "domain-hint")
-                .map(|s| s.to_string())
-                .unwrap_or_else(|_| "Conecte-se com sua conta corporativa ou local".into()),
+            default_user,
+            domain_hint,
+            default_session,
             wallpaper,
-            auto_ack: file
-                .boolean("Greeter", "acknowledge-arcfour")
-                .unwrap_or(true),
+            auto_ack,
         })
     }
 }

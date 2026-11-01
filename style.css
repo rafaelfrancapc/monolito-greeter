@@ -1,171 +1,158 @@
-/* Monolito Greeter — GTK4 CSS
-   Windows 11 geometry & macOS liquid glass materials.
-   Corporate, direct, high-contrast accessible, zero AI-slop. */
+/* Monolito Greeter — Windows 11 Native Architecture
+   Clean blurred backdrop, zero AI-slop cards, authentic Windows 11 Fluent geometry,
+   preselected user sign-in and discrete inputs. */
 
 window.greeter {
     color: #f1f5f9;
-    background: #060c18;
-    font-family: Inter, -apple-system, "Segoe UI", Cantarell, "DejaVu Sans", sans-serif;
+    background: #050b18;
+    font-family: -apple-system, "Segoe UI", Inter, Cantarell, "DejaVu Sans", sans-serif;
     font-size: 14px;
 }
 
-/* Scrim overlay: subtle atmospheric darkening for wallpaper contrast */
+/* Scrim overlay: soft atmospheric dimming for high contrast and gaussian blur depth */
 .scrim {
-    background: linear-gradient(
-        180deg,
-        alpha(#040812, 0.15) 0%,
-        alpha(#040812, 0.25) 50%,
-        alpha(#02040a, 0.65) 100%
-    );
+    background: alpha(#030712, 0.30);
 }
 
-/* Brand mark in top corner matching monolito wordmark */
-.brand-wordmark {
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: -0.4px;
-    color: alpha(white, 0.75);
+/* Hostname in top-left */
+.hostname-label {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: alpha(white, 0.60);
+    padding: 6px 0;
 }
 
 .demo-badge {
     color: #93c5fd;
     background: alpha(#1e3a8a, 0.35);
     border: 1px solid alpha(#60a5fa, 0.30);
-    border-radius: 100px;
+    border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.5px;
-    padding: 4px 12px;
+    padding: 3px 8px;
 }
 
-/* Glass circular buttons (Accessibility & Power) */
-.glass-circle-button {
-    border-radius: 100px;
-    min-width: 38px;
-    min-height: 38px;
+/* Flat utility buttons (Accessibility, Power, Network) */
+.flat-utility-btn {
+    border-radius: 4px;
+    min-width: 36px;
+    min-height: 36px;
     padding: 0;
-    background: alpha(white, 0.08);
-    border: 1px solid alpha(white, 0.14);
-    box-shadow: 0 4px 14px alpha(black, 0.18), inset 0 1px 0 alpha(white, 0.15);
-    color: #ffffff;
-    transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-}
-
-.glass-circle-button > button {
     background: transparent;
     border: none;
-    border-radius: 100px;
-    padding: 8px;
     box-shadow: none;
+    color: alpha(white, 0.85);
+    transition: background 150ms ease, color 150ms ease;
+}
+
+.flat-utility-btn > button {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: alpha(white, 0.85);
+    padding: 8px;
+}
+
+.flat-utility-btn:hover, .flat-utility-btn > button:hover {
+    background: alpha(white, 0.12);
     color: #ffffff;
 }
 
-.glass-circle-button:hover {
-    background: alpha(white, 0.16);
-    border-color: alpha(white, 0.24);
-    box-shadow: 0 6px 20px alpha(black, 0.25), inset 0 1px 0 alpha(white, 0.22);
-}
-
-.glass-circle-button:active {
-    background: alpha(white, 0.10);
+.utility-icon {
+    color: alpha(white, 0.80);
+    padding: 8px;
 }
 
 /* ==========================================================================
-   LOCK SCREEN (Windows 11 / macOS clean hierarchy)
+   LOCK SCREEN (Windows 11 clean hierarchy)
    ========================================================================== */
 
 .lock-clock {
-    font-size: 98px;
+    font-size: 108px;
     font-weight: 300;
-    letter-spacing: -3px;
+    letter-spacing: -2px;
     color: #ffffff;
-    text-shadow: 0 4px 28px alpha(#020814, 0.45);
+    text-shadow: 0 4px 24px alpha(black, 0.45);
     margin-top: 50px;
 }
 
 .lock-date {
-    font-size: 21px;
+    font-size: 20px;
     font-weight: 400;
-    color: alpha(white, 0.88);
-    text-shadow: 0 2px 14px alpha(#020814, 0.40);
+    color: alpha(white, 0.90);
+    text-shadow: 0 2px 14px alpha(black, 0.40);
     margin-top: -2px;
 }
 
-/* Subtle unlock indicator */
 .unlock-hint {
-    background: alpha(white, 0.07);
-    border: 1px solid alpha(white, 0.12);
-    border-radius: 100px;
-    padding: 10px 22px;
-    color: alpha(white, 0.85);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: alpha(white, 0.80);
     font-size: 13px;
     font-weight: 500;
-    box-shadow: 0 8px 24px alpha(black, 0.20), inset 0 1px 0 alpha(white, 0.12);
-    transition: background 200ms ease, border-color 200ms ease;
     margin-bottom: 40px;
+    transition: color 150ms ease;
 }
 
 .unlock-hint:hover {
-    background: alpha(white, 0.14);
-    border-color: alpha(white, 0.22);
     color: #ffffff;
+    background: transparent;
 }
 
 /* ==========================================================================
-   LOGIN SCREEN (Windows 11 domain login + macOS liquid glass)
+   LOGIN SCREEN (Direct Windows 11 layout, NO card container)
    ========================================================================== */
 
-.login-card {
-    background: alpha(#0c1524, 0.72);
-    border: 1px solid alpha(white, 0.15);
-    border-radius: 22px;
-    padding: 34px 38px 26px;
-    box-shadow: 0 24px 64px alpha(#01040a, 0.55), inset 0 1px 0 alpha(white, 0.18);
-    min-width: 400px;
+.login-form-container {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    min-width: 280px;
+    max-width: 320px;
 }
 
-/* Circular Avatar in Windows 11 style */
-.avatar-circle {
-    background: linear-gradient(145deg, alpha(white, 0.18), alpha(white, 0.08));
-    border: 1.5px solid alpha(white, 0.25);
+.avatar-picture {
     border-radius: 100px;
-    min-width: 86px;
-    min-height: 86px;
-    box-shadow: 0 10px 26px alpha(black, 0.25), inset 0 1px 0 alpha(white, 0.25);
-    margin-bottom: 12px;
-}
-
-.avatar-circle > image {
-    color: #ffffff;
+    min-width: 96px;
+    min-height: 96px;
+    box-shadow: 0 8px 24px alpha(black, 0.40);
+    margin-bottom: 14px;
 }
 
 .account-title {
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 26px;
+    font-weight: 500;
     letter-spacing: -0.3px;
     color: #ffffff;
+    text-shadow: 0 2px 8px alpha(black, 0.35);
+    margin-bottom: 18px;
 }
 
 .account-subtitle {
     font-size: 13px;
     font-weight: 400;
-    color: alpha(white, 0.65);
-    margin-top: 2px;
-    margin-bottom: 16px;
+    color: alpha(white, 0.70);
+    text-shadow: 0 1px 4px alpha(black, 0.35);
+    margin-top: 8px;
 }
 
-/* Form input fields */
+/* Form input fields: authentic Windows 11 style */
 entry, passwordentry {
-    min-height: 42px;
+    min-height: 36px;
     color: #ffffff;
-    caret-color: #60cdff;
-    background: alpha(black, 0.38);
-    border: 1px solid alpha(white, 0.18);
-    border-radius: 8px;
-    padding: 0 12px;
-    box-shadow: inset 0 1px 2px alpha(black, 0.35);
+    caret-color: #ffffff;
+    background: alpha(black, 0.45);
+    border: 1px solid alpha(white, 0.22);
+    border-bottom: 2px solid alpha(white, 0.50);
+    border-radius: 4px;
+    padding: 0 10px;
+    box-shadow: none;
     font-size: 13px;
-    transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    transition: border-color 140ms ease, background 140ms ease;
 }
 
 passwordentry entry {
@@ -177,57 +164,61 @@ passwordentry entry {
 }
 
 entry placeholder, passwordentry entry placeholder {
-    color: alpha(white, 0.42);
+    color: alpha(white, 0.45);
     font-size: 13px;
 }
 
+/* Windows 11 focus state: cyan bottom border, NO glow */
 entry:focus-within, passwordentry:focus-within {
-    background: alpha(black, 0.50);
-    border-color: #60cdff;
-    box-shadow: 0 0 0 2px alpha(#60cdff, 0.30), inset 0 1px 2px alpha(black, 0.25);
+    background: alpha(black, 0.60);
+    border-color: alpha(white, 0.25);
+    border-bottom: 2px solid #60cdff;
+    box-shadow: none;
 }
 
 entry:disabled, passwordentry:disabled {
-    opacity: 0.50;
+    opacity: 0.45;
 }
 
-/* Inline submit arrow button (Windows 11 style) */
-.submit-arrow-btn {
-    min-width: 42px;
-    min-height: 42px;
+/* Discrete Windows 11 submit button: NO glow */
+.submit-btn {
+    min-width: 36px;
+    min-height: 36px;
     padding: 0;
-    background: alpha(#0284c7, 0.85);
-    border: 1px solid alpha(#38bdf8, 0.60);
-    border-radius: 8px;
-    color: #ffffff;
-    box-shadow: 0 2px 8px alpha(#0284c7, 0.35), inset 0 1px 0 alpha(white, 0.25);
-    transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
-}
-
-.submit-arrow-btn:hover {
-    background: #0284c7;
-    border-color: #7dd3fc;
-    box-shadow: 0 4px 14px alpha(#0284c7, 0.50), inset 0 1px 0 alpha(white, 0.35);
-}
-
-.submit-arrow-btn:active {
-    background: #0369a1;
-}
-
-.submit-arrow-btn:disabled {
     background: alpha(white, 0.08);
+    border: 1px solid alpha(white, 0.22);
+    border-radius: 4px;
+    color: #ffffff;
+    box-shadow: none;
+    transition: background 140ms ease, border-color 140ms ease;
+}
+
+.submit-btn:hover {
+    background: alpha(white, 0.16);
+    border-color: alpha(white, 0.35);
+    box-shadow: none;
+}
+
+.submit-btn:active {
+    background: alpha(white, 0.10);
+    box-shadow: none;
+}
+
+.submit-btn:disabled {
+    opacity: 0.30;
+    background: alpha(white, 0.04);
     border-color: alpha(white, 0.12);
-    color: alpha(white, 0.35);
     box-shadow: none;
 }
 
 /* Status message */
 .status-text {
-    color: alpha(white, 0.75);
+    color: alpha(white, 0.80);
     font-size: 12px;
-    min-height: 24px;
-    margin-top: 6px;
+    min-height: 22px;
+    margin-top: 8px;
     margin-bottom: 4px;
+    text-shadow: 0 1px 4px alpha(black, 0.35);
 }
 
 .status-text.error {
@@ -236,15 +227,15 @@ entry:disabled, passwordentry:disabled {
 }
 
 spinner {
-    color: #60cdff;
+    color: #ffffff;
 }
 
-/* Secondary cancel / back button */
+/* Back button */
 .back-button {
     color: alpha(white, 0.65);
     background: transparent;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     box-shadow: none;
     padding: 6px 14px;
     font-size: 12px;
@@ -258,71 +249,55 @@ spinner {
 }
 
 /* ==========================================================================
-   BOTTOM PANELS (Windows 11 User Switcher & System Utility Bar)
+   BOTTOM-LEFT: Windows 11 User Switcher List
    ========================================================================== */
 
-/* Bottom-left user tile */
-.user-switch-pill {
+.user-switch-container {
+    margin-bottom: 4px;
+}
+
+.user-switch-item {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: alpha(white, 0.80);
+    transition: background 140ms ease, color 140ms ease;
+}
+
+.user-switch-item:hover {
     background: alpha(white, 0.08);
-    border: 1px solid alpha(white, 0.14);
-    border-radius: 12px;
-    padding: 8px 14px;
     color: #ffffff;
-    box-shadow: 0 4px 16px alpha(black, 0.18), inset 0 1px 0 alpha(white, 0.12);
-    transition: background 160ms ease, border-color 160ms ease;
 }
 
-.user-switch-pill:hover {
+.user-switch-item.active {
     background: alpha(white, 0.14);
-    border-color: alpha(white, 0.22);
+    color: #ffffff;
 }
 
-.user-switch-avatar {
-    background: alpha(white, 0.16);
+.avatar-small {
     border-radius: 100px;
-    min-width: 26px;
-    min-height: 26px;
+    min-width: 32px;
+    min-height: 32px;
 }
 
 .user-switch-label {
     font-size: 13px;
     font-weight: 500;
-    color: #ffffff;
+    color: inherit;
 }
 
-/* Session selector pill */
-.session-pill {
-    color: #ffffff;
-    background: alpha(white, 0.08);
-    border: 1px solid alpha(white, 0.14);
-    border-radius: 100px;
-    padding: 2px 8px 2px 12px;
-    box-shadow: 0 4px 16px alpha(black, 0.18), inset 0 1px 0 alpha(white, 0.12);
-}
+/* ==========================================================================
+   POPOVERS & ACCESSIBILITY
+   ========================================================================== */
 
-.session-pill dropdown > button {
-    background: transparent;
-    color: #ffffff;
-    border: none;
-    box-shadow: none;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 4px 6px;
-}
-
-/* Network indicator */
-.network-indicator {
-    color: alpha(white, 0.70);
-    padding: 8px;
-}
-
-/* Popovers (Accessibility & Power menus) */
 popover > contents {
-    background: alpha(#0a1220, 0.94);
+    background: alpha(#0a1220, 0.96);
     color: #ffffff;
     border: 1px solid alpha(white, 0.18);
-    border-radius: 16px;
-    box-shadow: 0 16px 40px alpha(black, 0.50), inset 0 1px 0 alpha(white, 0.15);
+    border-radius: 8px;
+    box-shadow: 0 16px 40px alpha(black, 0.60);
     padding: 6px;
 }
 
@@ -339,7 +314,7 @@ popover > contents {
     color: #ffffff;
     border: none;
     box-shadow: none;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 8px 18px;
     font-size: 13px;
     text-align: left;
@@ -362,23 +337,16 @@ switch:checked {
     background: #0284c7;
 }
 
-/* Accessibility focus rings */
-button:focus-visible, dropdown:focus-visible, switch:focus-visible {
+button:focus-visible, switch:focus-visible {
     outline: 2px solid #60cdff;
-    outline-offset: 3px;
+    outline-offset: 2px;
 }
 
-/* ==========================================================================
-   HIGH CONTRAST & ACCESSIBILITY
-   ========================================================================== */
-
-.high-contrast .login-card,
-.high-contrast .unlock-hint,
-.high-contrast .session-pill,
-.high-contrast .user-switch-pill {
+/* High contrast accessibility */
+.high-contrast .login-form-container,
+.high-contrast .user-switch-item.active {
     background: #000000;
-    border: 2px solid #ffffff;
-    box-shadow: none;
+    border: 1px solid #ffffff;
 }
 
 .high-contrast label {
@@ -392,7 +360,7 @@ button:focus-visible, dropdown:focus-visible, switch:focus-visible {
     color: #ffffff;
 }
 
-.high-contrast .submit-arrow-btn {
+.high-contrast .submit-btn {
     background: #ffffff;
     border: 2px solid #ffffff;
     color: #000000;
@@ -407,10 +375,9 @@ button:focus-visible, dropdown:focus-visible, switch:focus-visible {
 }
 
 .large-text .account-title {
-    font-size: 24px;
+    font-size: 28px;
 }
 
-.large-text .account-subtitle,
 .large-text entry,
 .large-text passwordentry,
 .large-text .status-text {
