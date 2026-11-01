@@ -1,0 +1,59 @@
+/* GTK CSS: glass-inspired surfaces, opaque inputs and clear focus rings.
+   GTK CSS has no web backdrop-filter. The built-in landscape stays soft;
+   external wallpapers can be pre-blurred without requiring a compositor. */
+window.greeter { color: #f3f7fa; background: #0a1723; font-family: Inter, "DejaVu Sans", sans-serif; font-size: 14px; }
+.scrim { background: linear-gradient(180deg, alpha(#07111f, 0.04), alpha(#07111f, 0.18) 55%, alpha(#030d19, 0.62)); }
+.monogram { background: alpha(#f5ffff, 0.13); border: 1px solid alpha(white, 0.22); border-radius: 11px; min-width: 32px; min-height: 32px; font-size: 18px; font-weight: 800; }
+.wordmark { font-size: 18px; font-weight: 600; letter-spacing: 1px; }
+.round-button { border-radius: 100px; min-width: 38px; min-height: 38px; padding: 0; background: alpha(#e0f5f9, 0.09); border: 1px solid alpha(white, 0.13); color: #fff; box-shadow: 0 3px 12px alpha(black, 0.08); }
+.round-button > button { background: transparent; border: none; border-radius: 100px; padding: 8px; box-shadow: none; color: white; }
+.round-button:hover { background: alpha(#e0f5f9, 0.18); }
+.demo-badge { color: #d5e5eb; font-size: 10px; letter-spacing: 1px; padding: 8px 16px; border: 1px solid alpha(white, 0.15); border-radius: 100px; margin-right: 8px; }
+.clock { font-size: 116px; font-weight: 300; letter-spacing: -6px; text-shadow: 0 4px 24px alpha(#031321, 0.15); }
+.date { font-size: 19px; font-weight: 500; color: #e1edf2; }
+.small-clock { font-size: 22px; font-weight: 400; letter-spacing: 1px; margin-bottom: 6px; }
+.welcome-pill { background: alpha(#142f3f, 0.72); border: 1px solid alpha(#e5ffff, 0.22); border-radius: 24px; padding: 16px 22px; color: #f3f8fa; box-shadow: 0 16px 48px alpha(#000917, 0.22); }
+.welcome-pill:hover { background: alpha(#254653, 0.85); }
+.mini-avatar { background: alpha(#c9e8e4, 0.15); border: 1px solid alpha(#fff, 0.22); border-radius: 100px; min-width: 44px; min-height: 44px; font-size: 21px; font-weight: 600; margin-right: 2px; }
+.welcome-title { font-size: 15px; font-weight: 600; }
+.muted { color: #c2d1d9; font-size: 12px; }
+.login-card { background: alpha(#122837, 0.93); border: 1px solid alpha(#e0f4ff, 0.23); border-radius: 28px; padding: 28px 30px 16px; box-shadow: 0 24px 70px alpha(#000713, 0.34), inset 0 1px alpha(white, 0.07); }
+.avatar { color: #e9f6f7; background: linear-gradient(135deg, #466871, #223f53); padding: 18px; border-radius: 100px; border: 1px solid alpha(#ebffff, 0.22); margin-bottom: 4px; box-shadow: 0 6px 20px alpha(black, 0.1); }
+.title { font-size: 25px; font-weight: 600; letter-spacing: -0.5px; }
+.subtitle { color: #c1d0da; font-size: 13px; margin-top: -7px; }
+.field-label { color: #d9e5ec; font-size: 12px; font-weight: 500; }
+entry, passwordentry { min-height: 44px; color: #f8fbff; caret-color: #9cd8e2; background: #1e3646; border: 1px solid #49616e; border-radius: 12px; padding: 0 13px; box-shadow: none; }
+passwordentry entry { min-height: 0; background: transparent; padding: 0; border: none; box-shadow: none; }
+entry placeholder { color: #9eafbb; font-size: 12px; }
+entry:focus-within, passwordentry:focus-within { border-color: #a4e0e8; box-shadow: 0 0 0 3px alpha(#93d6e1, 0.19); }
+passwordentry entry:focus-within { box-shadow: none; }
+entry:disabled, passwordentry:disabled { opacity: 0.56; }
+button.primary { background: linear-gradient(180deg, #d1eeed, #add6d8); color: #112f3d; border: 1px solid #d8f5f2; border-radius: 12px; min-height: 44px; padding: 0 16px; font-weight: 700; box-shadow: 0 3px 12px alpha(#020e1b, 0.18); margin-top: 3px; }
+button.primary:hover { background: #d5f6f3; }
+button.primary:active { background: #9fcacc; }
+button.primary:disabled { background: #52747e; border-color: #74909a; color: #e4edef; }
+button:focus-visible, dropdown:focus-visible, switch:focus-visible { outline: 2px solid #b2edf4; outline-offset: 4px; }
+.text-button { color: #c8dae2; background: none; border: none; box-shadow: none; padding: 5px; font-size: 12px; }
+.text-button:hover { color: #fff; background: alpha(white, 0.05); border-radius: 9px; }
+.status { color: #b5ccd6; font-size: 12px; min-height: 30px; }
+.status.error { color: #ffd1c6; }
+spinner { color: #bfebee; }
+.caption { color: #c0d1db; font-size: 11px; margin-top: 3px; }
+.session-pill { color: #dce8ee; background: alpha(#142b3b, 0.62); border: 1px solid alpha(white, 0.16); border-radius: 100px; padding: 2px 10px 2px 14px; }
+.session-pill dropdown > button { background: transparent; color: #dce8ee; border: none; box-shadow: none; font-size: 12px; }
+.footer-brand { color: #adbec7; font-size: 10px; letter-spacing: 2px; }
+popover > contents { background: #183141; color: #f4f7fa; border: 1px solid #4c6673; border-radius: 18px; box-shadow: 0 12px 32px alpha(black, 0.3); }
+popover modelbutton { color: #eff8fa; border-radius: 8px; }
+.popover-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.power-action { background: none; color: #eff7fa; border: none; box-shadow: none; border-radius: 9px; padding: 10px 30px; }
+.power-action:hover { background: #365260; }
+.power-action:disabled { color: #7c909b; }
+switch:checked { background: #a9d9dc; }
+.high-contrast .login-card, .high-contrast .welcome-pill, .high-contrast .session-pill { background: #050b13; border: 2px solid white; }
+.high-contrast label { color: white; text-shadow: 0 1px 3px black; }
+.high-contrast entry, .high-contrast passwordentry { background: #000; border-color: #fff; color: white; }
+.high-contrast button.primary { background: white; color: black; }
+.high-contrast .status.error { color: #ffb4a4; }
+.large-text { font-size: 17px; }
+.large-text .field-label, .large-text .status, .large-text .subtitle, .large-text entry { font-size: 16px; }
+.reduced-motion * { transition: none; animation: none; }

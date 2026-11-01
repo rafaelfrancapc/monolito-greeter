@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Monolito Greeter
+Comment=Native GTK4 LightDM greeter with manual domain login
+Exec=/usr/bin/monolito-greeter
+Type=Application
+X-LightDM-Session-Type=x
+X-LightDM-DesktopName=Monolito

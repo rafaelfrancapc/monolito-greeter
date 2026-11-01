@@ -1,0 +1,20 @@
+name: Native greeter
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  gtk-lightdm:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgtk-4-dev liblightdm-gobject-dev xvfb xauth x11-utils dbus-x11
+      - run: cargo fmt --check
+      - run: cargo test --locked
+      - run: cargo build --release --locked
+      - run: sh scripts/smoke-test.sh target/release/monolito-greeter

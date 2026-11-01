@@ -1,0 +1,23 @@
+[package]
+name = "monolito-greeter"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Greeter nativo GTK4 para LightDM, com login manual de domínio"
+license = "MIT"
+
+[dependencies]
+gtk = { package = "gtk4", version = "0.9", features = ["v4_8"] }
+glib = "0.20"
+gio = "0.20"
+zeroize = "1.8"
+
+[profile.release]
+lto = "thin"
+strip = true
+
+[profile.dev]
+debug = 0
+
+[profile.test]
+debug = 0
