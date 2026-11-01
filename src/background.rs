@@ -116,7 +116,7 @@ pub fn landscape() -> gtk::DrawingArea {
 
         // Edge vignette for soft contrast focus
         let vignette = cairo::RadialGradient::new(720., 450., 400., 720., 450., 880.);
-        vignette.add_color_stop_rgba(0., 0., 0., 0.);
+        vignette.add_color_stop_rgba(0., 0., 0., 0., 0.);
         vignette.add_color_stop_rgba(0.7, 0.01, 0.02, 0.05, 0.25);
         vignette.add_color_stop_rgba(1., 0.01, 0.02, 0.04, 0.65);
         let _ = cr.set_source(&vignette);
